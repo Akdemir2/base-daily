@@ -1,0 +1,24 @@
+{
+  "miniapp": {
+    "version": "1",
+    "name": "Base Daily",
+    "homeUrl": "https://base-daily-three.vercel.app",
+    "iconUrl": "https://base-daily-three.vercel.app/base-daily-icon.png",
+    "splashImageUrl": "https://base-daily-three.vercel.app/base-daily-splash.png",
+    "splashBackgroundColor": "#07111F",
+    "subtitle": "One Base question. Every day.",
+    "description": "Answer one Base question every day, earn points, build your streak and climb the leaderboard.",
+    "primaryCategory": "games",
+    "tags": [
+      "base",
+      "quiz",
+      "daily",
+      "onchain"
+    ],
+    "heroImageUrl": "https://base-daily-three.vercel.app/base-daily-share.png",
+    "tagline": "One Base question. Every day.",
+    "ogTitle": "Base Daily",
+    "ogDescription": "Answer daily. Earn points. Keep your streak.",
+    "ogImageUrl": "https://base-daily-three.vercel.app/base-daily-share.png"
+  }
+}
