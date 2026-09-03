@@ -153,7 +153,7 @@ export default function Home() {
     providerToRead: EthereumProvider,
     retry = false,
   ) {
-    const attempts = retry ? 4 : 1;
+    const attempts = retry ? 8 : 1;
 
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       const chainId = await providerToRead.request({
@@ -167,7 +167,7 @@ export default function Home() {
       }
 
       if (attempt < attempts - 1) {
-        await new Promise((resolve) => setTimeout(resolve, 400));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     }
 
