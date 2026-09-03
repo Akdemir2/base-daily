@@ -47,3 +47,5 @@ cache/
 # Local AI assistant skill files
 .agents/
 .claude/
+.vercel
+.env*
