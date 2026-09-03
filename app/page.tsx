@@ -47,6 +47,21 @@ type UserStats = {
   lastPlayedDay: number;
 };
 
+type LeaderboardEntry = {
+  rank: number;
+  address: `0x${string}`;
+  totalPoints: number;
+  currentStreak: number;
+  totalCorrect: number;
+  totalPlayed: number;
+  lastPlayedDay: number;
+};
+
+type LeaderboardResponse = {
+  leaderboard: LeaderboardEntry[];
+  updatedAt: string;
+};
+
 const BASE_SEPOLIA_CHAIN_ID = "0x14a34";
 
 function isBaseSepoliaChain(chainId: unknown) {
@@ -83,6 +98,10 @@ export default function Home() {
   const [claimError, setClaimError] = useState<string | null>(null);
   const [claimHash, setClaimHash] = useState<`0x${string}` | null>(null);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -99,6 +118,33 @@ export default function Home() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
   const cleanupListenersRef = useRef<(() => void) | null>(null);
+
+  async function loadLeaderboard() {
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
+
+    try {
+      const response = await fetch("/api/leaderboard", {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load leaderboard.");
+      }
+
+      const data = (await response.json()) as LeaderboardResponse;
+      setLeaderboard(data.leaderboard);
+    } catch {
+      setLeaderboardError("Leaderboard could not be loaded.");
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  }
+
+  function openLeaderboard() {
+    setShowLeaderboard(true);
+    void loadLeaderboard();
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -658,12 +704,112 @@ export default function Home() {
         </header>
 
 
+        {showLeaderboard && (
+          <section className="mt-12">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d86ff]">
+                  Leaderboard
+                </div>
+                <h2 className="mt-3 text-[34px] font-bold tracking-[-0.045em]">
+                  Top Players
+                </h2>
+                <p className="mt-3 text-[14px] leading-6 text-[#a7b8c9]">
+                  Ranked by total points, streak and correct answers.
+                </p>
+              </div>
+            </div>
+
+            {leaderboardLoading && (
+              <div className="mt-10 text-[15px] font-medium text-[#a7b8c9]">
+                Loading leaderboard...
+              </div>
+            )}
+
+            {leaderboardError && (
+              <div className="mt-8 rounded-2xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-[14px] text-red-100">
+                {leaderboardError}
+              </div>
+            )}
+
+            {!leaderboardLoading && !leaderboardError && (
+              <div className="mt-8 flex flex-col gap-3">
+                {leaderboard.map((entry) => {
+                  const isYou =
+                    walletAddress?.toLowerCase() === entry.address.toLowerCase();
+
+                  return (
+                    <div
+                      key={entry.address}
+                      className={`rounded-2xl border px-4 py-4 backdrop-blur-sm ${
+                        isYou
+                          ? "border-[#5d86ff]/70 bg-[#456fff]/15"
+                          : "border-[#7790a8]/25 bg-[#293e53]/45"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1c3043] text-sm font-bold text-[#72a0ff]">
+                          #{entry.rank}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-[14px] font-semibold text-white">
+                              {shortenAddress(entry.address)}
+                            </span>
+                            {isYou && (
+                              <span className="rounded-full bg-[#456fff]/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#72a0ff]">
+                                You
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="mt-2 flex gap-4 text-[11px] text-[#9eb0c2]">
+                            <span>
+                              <strong className="text-white">{entry.totalPoints}</strong>{" "}
+                              pts
+                            </span>
+                            <span>
+                              <strong className="text-white">{entry.currentStreak}</strong>{" "}
+                              streak
+                            </span>
+                            <span>
+                              <strong className="text-white">{entry.totalCorrect}</strong>{" "}
+                              correct
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {leaderboard.length === 0 && (
+                  <div className="rounded-2xl border border-[#7790a8]/25 bg-[#293e53]/45 px-5 py-6 text-center text-sm text-[#a7b8c9]">
+                    No players yet.
+                  </div>
+                )}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowLeaderboard(false)}
+              className="mt-8 flex w-full items-center justify-center py-3 text-xs font-semibold text-[#72a0ff] transition hover:text-white"
+            >
+              Back to Today
+            </button>
+          </section>
+        )}
+
         {walletError && (
           <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-[13px] text-red-100">
             {walletError}
           </div>
         )}
 
+        {!showLeaderboard && (
+          <>
         <section className="mt-16">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d86ff]">
             Today&apos;s Question
@@ -833,11 +979,14 @@ export default function Home() {
 
           <button
             type="button"
+            onClick={openLeaderboard}
             className="mt-4 flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-[#72a0ff] transition hover:text-white"
           >
             <span>View Leaderboard</span>
           </button>
         </section>
+          </>
+        )}
       </div>
     </main>
   );

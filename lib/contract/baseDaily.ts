@@ -3,6 +3,20 @@ export const BASE_DAILY_ADDRESS =
 
 export const BASE_DAILY_ABI = [
   {
+    type: "event",
+    name: "DailyClaimed",
+    inputs: [
+      { name: "user", type: "address", indexed: true },
+      { name: "questionId", type: "uint256", indexed: true },
+      { name: "day", type: "uint256", indexed: true },
+      { name: "correct", type: "bool", indexed: false },
+      { name: "pointsEarned", type: "uint256", indexed: false },
+      { name: "totalPoints", type: "uint256", indexed: false },
+      { name: "totalCorrect", type: "uint256", indexed: false },
+      { name: "currentStreak", type: "uint256", indexed: false },
+    ],
+  },
+  {
     type: "function",
     name: "claimDaily",
     stateMutability: "nonpayable",
