@@ -47,6 +47,13 @@ type UserStats = {
   lastPlayedDay: number;
 };
 
+type FarcasterProfile = {
+  fid: number;
+  username: string;
+  displayName: string;
+  pfpUrl: string;
+};
+
 type LeaderboardEntry = {
   rank: number;
   address: `0x${string}`;
@@ -55,6 +62,7 @@ type LeaderboardEntry = {
   totalCorrect: number;
   totalPlayed: number;
   lastPlayedDay: number;
+  farcaster: FarcasterProfile | null;
 };
 
 type LeaderboardResponse = {
@@ -68,7 +76,6 @@ function isBaseSepoliaChain(chainId: unknown) {
   if (typeof chainId === "number") {
     return chainId === 84532;
   }
-
 
   if (typeof chainId !== "string") {
     return false;
@@ -206,7 +213,6 @@ export default function Home() {
         method: "eth_chainId",
       });
 
-
       if (isBaseSepoliaChain(chainId)) {
         setWrongNetwork(false);
         return true;
@@ -249,9 +255,7 @@ export default function Home() {
       const chainId = args[0];
 
       if (typeof chainId === "string") {
-        setWrongNetwork(
-          !isBaseSepoliaChain(chainId),
-        );
+        setWrongNetwork(!isBaseSepoliaChain(chainId));
       }
 
       setSelectedAnswer(null);
@@ -374,6 +378,7 @@ export default function Home() {
         window.localStorage.setItem("base-daily-wallet-id", wallet.id);
         await readUserStats(confirmedAccount);
       }
+
       // Some injected wallets briefly report a stale chain after connecting.
       // Retry the selected provider before showing a network warning.
       await readChain(wallet.provider, true);
@@ -420,7 +425,6 @@ export default function Home() {
   }
 
   async function handleSubmitAnswer() {
-
     if (
       !provider ||
       !walletAddress ||
@@ -558,7 +562,7 @@ export default function Home() {
       }
 
       setClaimHash(hash);
-    await readUserStats(currentAccount);
+      await readUserStats(currentAccount);
     } catch (err) {
       setClaimError(
         err instanceof Error
@@ -569,6 +573,7 @@ export default function Home() {
       setClaimBusy(false);
     }
   }
+
   async function handleSwitchNetwork() {
     if (!provider) {
       return;
@@ -703,7 +708,6 @@ export default function Home() {
           </div>
         </header>
 
-
         {showLeaderboard && (
           <section className="mt-12">
             <div className="flex items-end justify-between gap-4">
@@ -752,11 +756,28 @@ export default function Home() {
                           #{entry.rank}
                         </div>
 
+                        {entry.farcaster?.pfpUrl ? (
+                          <img
+                            src={entry.farcaster.pfpUrl}
+                            alt=""
+                            className="h-10 w-10 shrink-0 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#7790a8]/25 bg-[#1c3043] text-[11px] font-bold uppercase text-[#9eb0c2]">
+                            {entry.farcaster?.username
+                              ? entry.farcaster.username.slice(0, 2)
+                              : entry.address.slice(2, 4)}
+                          </div>
+                        )}
+
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <span className="truncate text-[14px] font-semibold text-white">
-                              {shortenAddress(entry.address)}
+                              {entry.farcaster
+                                ? `@${entry.farcaster.username}`
+                                : shortenAddress(entry.address)}
                             </span>
+
                             {isYou && (
                               <span className="rounded-full bg-[#456fff]/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#72a0ff]">
                                 You
@@ -764,17 +785,29 @@ export default function Home() {
                             )}
                           </div>
 
+                          {entry.farcaster && (
+                            <div className="mt-0.5 truncate text-[11px] text-[#8299af]">
+                              {entry.farcaster.displayName}
+                            </div>
+                          )}
+
                           <div className="mt-2 flex gap-4 text-[11px] text-[#9eb0c2]">
                             <span>
-                              <strong className="text-white">{entry.totalPoints}</strong>{" "}
+                              <strong className="text-white">
+                                {entry.totalPoints}
+                              </strong>{" "}
                               pts
                             </span>
                             <span>
-                              <strong className="text-white">{entry.currentStreak}</strong>{" "}
+                              <strong className="text-white">
+                                {entry.currentStreak}
+                              </strong>{" "}
                               streak
                             </span>
                             <span>
-                              <strong className="text-white">{entry.totalCorrect}</strong>{" "}
+                              <strong className="text-white">
+                                {entry.totalCorrect}
+                              </strong>{" "}
                               correct
                             </span>
                           </div>
@@ -810,181 +843,192 @@ export default function Home() {
 
         {!showLeaderboard && (
           <>
-        <section className="mt-16">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d86ff]">
-            Today&apos;s Question
-          </div>
+            <section className="mt-16">
+              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d86ff]">
+                Today&apos;s Question
+              </div>
 
-          <h2 className="mt-3 text-[34px] font-bold leading-[1.08] tracking-[-0.045em]">
-            One question.
-            <br />
-            Every day.
-          </h2>
+              <h2 className="mt-3 text-[34px] font-bold leading-[1.08] tracking-[-0.045em]">
+                One question.
+                <br />
+                Every day.
+              </h2>
 
-          <p className="mt-4 max-w-sm text-[15px] leading-6 text-[#a7b8c9]">
-            Answer today&apos;s Base question, claim your points and keep your
-            streak alive.
-          </p>
-        </section>
-
-        <section className="mt-10">
-          {loading && (
-            <p className="text-[15px] font-medium text-[#a7b8c9]">
-              Loading today&apos;s question...
-            </p>
-          )}
-
-          {error && (
-            <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-[14px] text-red-100">
-              {error}
-            </div>
-          )}
-
-          {dailyQuestion && !loading && !error && !answerResult && (
-            <>
-              <p className="text-[20px] font-semibold tracking-[-0.025em]">
-                {dailyQuestion.question}
+              <p className="mt-4 max-w-sm text-[15px] leading-6 text-[#a7b8c9]">
+                Answer today&apos;s Base question, claim your points and keep
+                your streak alive.
               </p>
+            </section>
 
-              <div className="mt-5 flex flex-col gap-3">
-                {dailyQuestion.options.map((answer, index) => {
-                  const selected = selectedAnswer === index;
+            <section className="mt-10">
+              {loading && (
+                <p className="text-[15px] font-medium text-[#a7b8c9]">
+                  Loading today&apos;s question...
+                </p>
+              )}
 
-                  return (
-                    <button
-                      key={`${dailyQuestion.id}-${index}`}
-                      type="button"
-                      onClick={() => setSelectedAnswer(index)}
-                      className={`flex min-h-[62px] w-full items-center justify-between rounded-2xl border px-5 text-left text-[15px] font-semibold backdrop-blur-sm transition ${
-                        selected
-                          ? "border-[#5d86ff] bg-[#456fff]/20 text-white shadow-[0_0_24px_rgba(69,111,255,0.10)]"
-                          : "border-[#7790a8]/25 bg-[#31475d]/45 text-[#eef4f9] hover:border-[#8ca4ba]/45 hover:bg-[#365069]/55"
-                      }`}
-                    >
-                      <span>{answer}</span>
+              {error && (
+                <div className="rounded-2xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-[14px] text-red-100">
+                  {error}
+                </div>
+              )}
 
-                      <span
-                        className={`flex h-5 w-5 items-center justify-center rounded-full border ${
-                          selected
-                            ? "border-[#5d86ff] bg-[#456fff]"
-                            : "border-[#a4b5c5]/55"
-                        }`}
-                      >
-                        {selected && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                        )}
-                      </span>
-                    </button>
-                  );
-                })}
+              {dailyQuestion && !loading && !error && !answerResult && (
+                <>
+                  <p className="text-[20px] font-semibold tracking-[-0.025em]">
+                    {dailyQuestion.question}
+                  </p>
+
+                  <div className="mt-5 flex flex-col gap-3">
+                    {dailyQuestion.options.map((answer, index) => {
+                      const selected = selectedAnswer === index;
+
+                      return (
+                        <button
+                          key={`${dailyQuestion.id}-${index}`}
+                          type="button"
+                          onClick={() => setSelectedAnswer(index)}
+                          className={`flex min-h-[62px] w-full items-center justify-between rounded-2xl border px-5 text-left text-[15px] font-semibold backdrop-blur-sm transition ${
+                            selected
+                              ? "border-[#5d86ff] bg-[#456fff]/20 text-white shadow-[0_0_24px_rgba(69,111,255,0.10)]"
+                              : "border-[#7790a8]/25 bg-[#31475d]/45 text-[#eef4f9] hover:border-[#8ca4ba]/45 hover:bg-[#365069]/55"
+                          }`}
+                        >
+                          <span>{answer}</span>
+
+                          <span
+                            className={`flex h-5 w-5 items-center justify-center rounded-full border ${
+                              selected
+                                ? "border-[#5d86ff] bg-[#456fff]"
+                                : "border-[#a4b5c5]/55"
+                            }`}
+                          >
+                            {selected && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                            )}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={
+                      wrongNetwork
+                        ? handleSwitchNetwork
+                        : handleSubmitAnswer
+                    }
+                    disabled={
+                      !walletAddress ||
+                      walletBusy ||
+                      answerBusy ||
+                      (!wrongNetwork && selectedAnswer === null)
+                    }
+                    className="mt-5 h-[58px] w-full rounded-2xl bg-[#456fff] text-[15px] font-bold shadow-[0_8px_28px_rgba(27,48,81,0.22)] transition hover:bg-[#557bff] disabled:cursor-not-allowed disabled:bg-[#34485d]/70 disabled:text-[#8295a9]"
+                  >
+                    {!walletAddress
+                      ? "Connect Wallet to Answer"
+                      : wrongNetwork
+                        ? "Switch to Base Sepolia"
+                        : answerBusy
+                          ? "Submitting..."
+                          : "Submit Answer"}
+                  </button>
+                </>
+              )}
+            </section>
+
+            {answerError && (
+              <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-[14px] text-red-100">
+                {answerError}
+              </div>
+            )}
+
+            {answerResult && (
+              <div className="rounded-3xl border border-[#7790a8]/25 bg-[#293e53]/45 px-6 py-7 text-center backdrop-blur-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d86ff]">
+                  Your Result
+                </div>
+
+                <h3 className="mt-4 text-[32px] font-bold tracking-[-0.04em]">
+                  {answerResult.correct ? "Correct!" : "Not quite"}
+                </h3>
+
+                <p className="mt-3 text-[15px] leading-6 text-[#a7b8c9]">
+                  {answerResult.correct
+                    ? "You earned 3 points today."
+                    : "You earned 1 participation point today."}
+                </p>
+
+                {claimError && (
+                  <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-[13px] text-red-100">
+                    {claimError}
+                  </div>
+                )}
+
+                {claimHash ? (
+                  <div className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
+                    <div className="text-[15px] font-bold text-emerald-100">
+                      Points claimed!
+                    </div>
+                    <div className="mt-1 text-xs text-[#a7b8c9]">
+                      Your Base Sepolia transaction was confirmed.
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleClaim}
+                    disabled={claimBusy || wrongNetwork}
+                    className="mt-6 h-[58px] w-full rounded-2xl bg-[#456fff] text-[15px] font-bold shadow-[0_8px_28px_rgba(27,48,81,0.22)] transition hover:bg-[#557bff] disabled:cursor-not-allowed disabled:bg-[#34485d]/70 disabled:text-[#8295a9]"
+                  >
+                    {claimBusy
+                      ? "Claiming..."
+                      : `CLAIM +${answerResult.points} POINTS`}
+                  </button>
+                )}
+              </div>
+            )}
+
+            <section className="mt-auto pt-14">
+              <div className="grid grid-cols-3 divide-x divide-[#8299af]/20 rounded-2xl border border-[#8299af]/25 bg-[#293e53]/45 py-4 backdrop-blur-sm shadow-[0_10px_40px_rgba(10,20,32,0.14)]">
+                <div className="text-center">
+                  <div className="text-[17px] font-bold">
+                    {userStats?.totalPoints ?? 0}
+                  </div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eb0c2]">
+                    Points
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-[17px] font-bold">
+                    {userStats?.currentStreak ?? 0}
+                  </div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eb0c2]">
+                    Streak
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <div className="text-[17px] font-bold">
+                    {userStats?.totalCorrect ?? 0}
+                  </div>
+                  <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eb0c2]">
+                    Correct
+                  </div>
+                </div>
               </div>
 
               <button
                 type="button"
-                onClick={wrongNetwork ? handleSwitchNetwork : handleSubmitAnswer}
-                disabled={
-                  !walletAddress ||
-                  walletBusy ||
-                  answerBusy ||
-                  (!wrongNetwork && selectedAnswer === null)
-                }
-                className="mt-5 h-[58px] w-full rounded-2xl bg-[#456fff] text-[15px] font-bold shadow-[0_8px_28px_rgba(27,48,81,0.22)] transition hover:bg-[#557bff] disabled:cursor-not-allowed disabled:bg-[#34485d]/70 disabled:text-[#8295a9]"
+                onClick={openLeaderboard}
+                className="mt-4 flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-[#72a0ff] transition hover:text-white"
               >
-                {!walletAddress
-                  ? "Connect Wallet to Answer"
-                  : wrongNetwork
-                    ? "Switch to Base Sepolia"
-                    : answerBusy
-                      ? "Submitting..."
-                      : "Submit Answer"}
+                <span>View Leaderboard</span>
               </button>
-            </>
-          )}
-        </section>
-
-          {answerError && (
-            <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-[14px] text-red-100">
-              {answerError}
-            </div>
-          )}
-
-          {answerResult && (
-            <div className="rounded-3xl border border-[#7790a8]/25 bg-[#293e53]/45 px-6 py-7 text-center backdrop-blur-sm">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5d86ff]">
-                Your Result
-              </div>
-
-              <h3 className="mt-4 text-[32px] font-bold tracking-[-0.04em]">
-                {answerResult.correct ? "Correct!" : "Not quite"}
-              </h3>
-
-              <p className="mt-3 text-[15px] leading-6 text-[#a7b8c9]">
-                {answerResult.correct
-                  ? "You earned 3 points today."
-                  : "You earned 1 participation point today."}
-              </p>
-
-              {claimError && (
-                <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-[13px] text-red-100">
-                  {claimError}
-                </div>
-              )}
-
-              {claimHash ? (
-                <div className="mt-6 rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-4">
-                  <div className="text-[15px] font-bold text-emerald-100">
-                    Points claimed!
-                  </div>
-                  <div className="mt-1 text-xs text-[#a7b8c9]">
-                    Your Base Sepolia transaction was confirmed.
-                  </div>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleClaim}
-                  disabled={claimBusy || wrongNetwork}
-                  className="mt-6 h-[58px] w-full rounded-2xl bg-[#456fff] text-[15px] font-bold shadow-[0_8px_28px_rgba(27,48,81,0.22)] transition hover:bg-[#557bff] disabled:cursor-not-allowed disabled:bg-[#34485d]/70 disabled:text-[#8295a9]"
-                >
-                  {claimBusy
-                    ? "Claiming..."
-                    : `CLAIM +${answerResult.points} POINTS`}
-                </button>
-              )}
-            </div>
-          )}
-        <section className="mt-auto pt-14">
-          <div className="grid grid-cols-3 divide-x divide-[#8299af]/20 rounded-2xl border border-[#8299af]/25 bg-[#293e53]/45 py-4 backdrop-blur-sm shadow-[0_10px_40px_rgba(10,20,32,0.14)]">
-            <div className="text-center">
-              <div className="text-[17px] font-bold">{userStats?.totalPoints ?? 0}</div>
-              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eb0c2]">
-                Points
-              </div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-[17px] font-bold">{userStats?.currentStreak ?? 0}</div>
-              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eb0c2]">
-                Streak
-              </div>
-            </div>
-
-            <div className="text-center">
-              <div className="text-[17px] font-bold">{userStats?.totalCorrect ?? 0}</div>
-              <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#9eb0c2]">
-                Correct
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={openLeaderboard}
-            className="mt-4 flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-[#72a0ff] transition hover:text-white"
-          >
-            <span>View Leaderboard</span>
-          </button>
-        </section>
+            </section>
           </>
         )}
       </div>
