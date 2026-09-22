@@ -18,6 +18,10 @@ export const metadata: Metadata = {
 
   applicationName: "Base Daily",
 
+  other: {
+    "base:app_id": "6ab27442f74c6cddeb039f21",
+  },
+
   icons: {
     icon: "/base-daily-icon.png",
     apple: "/base-daily-icon.png",
