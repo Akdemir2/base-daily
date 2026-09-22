@@ -565,6 +565,9 @@ export default function Home() {
       }
 
       setClaimHash(hash);
+
+      // Give the public RPC a moment to serve the newly confirmed state.
+      await new Promise((resolve) => setTimeout(resolve, 750));
       await readUserStats(currentAccount);
     } catch (err) {
       setClaimError(
