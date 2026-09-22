@@ -9,6 +9,8 @@ import {
 } from "viem";
 import { baseSepolia } from "viem/chains";
 
+const BUILDER_CODE_SUFFIX = "0x62635f7876686c7a6e7a6a0b0080218021802180218021802180218021" as const;
+
 import {
   BASE_DAILY_ABI,
   BASE_DAILY_ADDRESS,
@@ -534,6 +536,7 @@ export default function Home() {
         account: currentAccount,
         chain: baseSepolia,
         transport: custom(provider),
+        dataSuffix: BUILDER_CODE_SUFFIX,
       });
 
       const hash = await walletClient.writeContract({
