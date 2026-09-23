@@ -8,6 +8,7 @@ import {
   http,
 } from "viem";
 import { baseSepolia } from "viem/chains";
+import { sdk } from "@farcaster/miniapp-sdk";
 
 const BUILDER_CODE_SUFFIX = "0x62635f7876686c7a6e7a6a0b0080218021802180218021802180218021" as const;
 
@@ -580,6 +581,54 @@ export default function Home() {
     }
   }
 
+  function getShareText() {
+    const streak = userStats?.currentStreak ?? 0;
+    const streakText =
+      streak > 0
+        ? ` \u00B7 \uD83D\uDD25 ${streak} day${streak === 1 ? "" : "s"} streak`
+        : "";
+
+    if (!answerResult) {
+      return "One Base question. Every day. \uD83D\uDD35";
+    }
+
+    return answerResult.correct
+      ? `I got today's Base Daily question right \uD83D\uDD35
+
++${answerResult.points} points${streakText}
+
+Think you know Base?`
+      : `I played today's Base Daily \uD83D\uDD35
+
+\uD83D\uDD25 Keep the streak going.
+
+Think you know Base?`;
+  }
+
+  function shareOnX() {
+    const text = getShareText();
+    const url = "https://base-daily-three.vercel.app/";
+    const shareUrl =
+      `https://x.com/intent/post?text=${encodeURIComponent(text)}` +
+      `&url=${encodeURIComponent(url)}`;
+
+    window.open(shareUrl, "_blank", "noopener,noreferrer");
+  }
+
+  async function shareOnFarcaster() {
+    const text = getShareText();
+    const url = "https://base-daily-three.vercel.app/";
+
+    try {
+      await sdk.actions.composeCast({
+        text,
+        embeds: [url],
+      });
+    } catch (err) {
+      console.error("[Base Daily] Farcaster share failed", err);
+    }
+  }
+
   async function handleSwitchNetwork() {
     if (!provider) {
       return;
@@ -980,6 +1029,24 @@ export default function Home() {
                     </div>
                     <div className="mt-1 text-xs text-[#a7b8c9]">
                       Your Base Sepolia transaction was confirmed.
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={shareOnFarcaster}
+                        className="h-11 rounded-xl border border-[#8299af]/25 bg-[#1d3043]/70 px-3 text-[13px] font-bold text-white transition hover:bg-[#293e53]"
+                      >
+                        Share on Farcaster
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={shareOnX}
+                        className="h-11 rounded-xl border border-[#8299af]/25 bg-[#1d3043]/70 px-3 text-[13px] font-bold text-white transition hover:bg-[#293e53]"
+                      >
+                        Share on X
+                      </button>
                     </div>
                   </div>
                 ) : (
