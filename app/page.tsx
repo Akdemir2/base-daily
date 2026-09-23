@@ -194,6 +194,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    void sdk.actions.ready();
+  }, []);
+
+  useEffect(() => {
     void tryAutoReconnect();
     // Run only once when the app starts.
     // eslint-disable-next-line react-hooks/exhaustive-deps
