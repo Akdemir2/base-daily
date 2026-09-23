@@ -1,24 +1,29 @@
-{
-  "miniapp": {
-    "version": "1",
-    "name": "Base Daily",
-    "homeUrl": "https://base-daily-three.vercel.app",
-    "iconUrl": "https://base-daily-three.vercel.app/base-daily-icon.png",
-    "splashImageUrl": "https://base-daily-three.vercel.app/base-daily-splash.png",
-    "splashBackgroundColor": "#07111F",
-    "subtitle": "One Base question. Every day.",
-    "description": "Answer one Base question every day, earn points, build your streak and climb the leaderboard.",
-    "primaryCategory": "games",
-    "tags": [
-      "base",
-      "quiz",
-      "daily",
-      "onchain"
-    ],
-    "heroImageUrl": "https://base-daily-three.vercel.app/base-daily-share.png",
-    "tagline": "One Base question. Every day.",
-    "ogTitle": "Base Daily",
-    "ogDescription": "Answer daily. Earn points. Keep your streak.",
-    "ogImageUrl": "https://base-daily-three.vercel.app/base-daily-share.png"
-  }
+﻿{
+    "miniapp":  {
+                    "version":  "1",
+                    "name":  "Base Daily",
+                    "homeUrl":  "https://base-daily-three.vercel.app",
+                    "iconUrl":  "https://base-daily-three.vercel.app/base-daily-icon.png",
+                    "splashImageUrl":  "https://base-daily-three.vercel.app/base-daily-splash.png",
+                    "splashBackgroundColor":  "#07111F",
+                    "subtitle":  "One Base question. Every day.",
+                    "description":  "Answer one Base question every day, earn points, build your streak and climb the leaderboard.",
+                    "primaryCategory":  "games",
+                    "tags":  [
+                                 "base",
+                                 "quiz",
+                                 "daily",
+                                 "onchain"
+                             ],
+                    "heroImageUrl":  "https://base-daily-three.vercel.app/base-daily-share.png",
+                    "tagline":  "One Base question. Every day.",
+                    "ogTitle":  "Base Daily",
+                    "ogDescription":  "Answer daily. Earn points. Keep your streak.",
+                    "ogImageUrl":  "https://base-daily-three.vercel.app/base-daily-share.png"
+                },
+    "accountAssociation":  {
+                               "header":  "eyJmaWQiOjEzNTE4NTUsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhhRWNlREVEMWNkNkY5MTk0RTQ5M0JlMjUzREQ3OGNlMTQ3OUM0RjE5In0",
+                               "payload":  "eyJkb21haW4iOiJiYXNlLWRhaWx5LXRocmVlLnZlcmNlbC5hcHAifQ",
+                               "signature":  "isBxEohiI7xunUyUksRC0a7bjOTvg1IWpX72n42CM3ls1TVbqBuuwou8v9JJWDtl+knU1bDR7ys6sRWq8T+dwBs="
+                           }
 }
