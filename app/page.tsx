@@ -587,6 +587,8 @@ export default function Home() {
 
   function getShareText() {
     const streak = userStats?.currentStreak ?? 0;
+    const totalPoints = userStats?.totalPoints ?? 0;
+
     const streakText =
       streak > 0
         ? ` \u00B7 \uD83D\uDD25 ${streak} day${streak === 1 ? "" : "s"} streak`
@@ -600,11 +602,13 @@ export default function Home() {
       ? `I got today's Base Daily question right \uD83D\uDD35
 
 +${answerResult.points} points${streakText}
+\uD83C\uDFC6 Total points: ${totalPoints.toLocaleString("en-US")}
 
 Think you know Base?`
       : `I played today's Base Daily \uD83D\uDD35
 
 \uD83D\uDD25 Keep the streak going.
+\uD83C\uDFC6 Total points: ${totalPoints.toLocaleString("en-US")}
 
 Think you know Base?`;
   }
