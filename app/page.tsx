@@ -584,7 +584,11 @@ export default function Home() {
       setClaimBusy(false);
     }
   }
-
+  const alreadyPlayedToday =
+    !!walletAddress &&
+    !!userStats &&
+    !!dailyQuestion &&
+    userStats.lastPlayedDay === dailyQuestion.day;
   function getShareText() {
     const streak = userStats?.currentStreak ?? 0;
     const totalPoints = userStats?.totalPoints ?? 0;
@@ -936,7 +940,11 @@ Think you know Base?`;
                 </div>
               )}
 
-              {dailyQuestion && !loading && !error && !answerResult && (
+              {dailyQuestion &&
+  !loading &&
+  !error &&
+  !answerResult &&
+  !alreadyPlayedToday && (
                 <>
                   <p className="text-[20px] font-semibold tracking-[-0.025em]">
                     {dailyQuestion.question}
@@ -1001,7 +1009,45 @@ Think you know Base?`;
                 </>
               )}
             </section>
+            {alreadyPlayedToday && !answerResult && (
+              <div className="mt-6 rounded-3xl border border-emerald-400/20 bg-emerald-400/10 px-6 py-7 text-center backdrop-blur-sm">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">
+                  Completed for today
+                </div>
 
+                <h3 className="mt-4 text-[30px] font-bold tracking-[-0.04em]">
+                  You&apos;re all set ✓
+                </h3>
+
+                <p className="mt-3 text-[15px] leading-6 text-[#a7b8c9]">
+                  You&apos;ve already completed today&apos;s Base Daily.
+                </p>
+
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-[#7790a8]/20 bg-[#1d3043]/60 px-4 py-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8299af]">
+                      Total Points
+                    </div>
+                    <div className="mt-2 text-2xl font-bold text-white">
+                      {userStats?.totalPoints ?? 0}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#7790a8]/20 bg-[#1d3043]/60 px-4 py-4">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8299af]">
+                      Current Streak
+                    </div>
+                    <div className="mt-2 text-2xl font-bold text-white">
+                      🔥 {userStats?.currentStreak ?? 0}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="mt-6 text-[13px] text-[#8299af]">
+                  Come back tomorrow for the next question.
+                </p>
+              </div>
+            )}
             {answerError && (
               <div className="mt-5 rounded-2xl border border-red-400/20 bg-red-400/10 px-5 py-4 text-[14px] text-red-100">
                 {answerError}
