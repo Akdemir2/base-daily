@@ -1,4 +1,4 @@
-﻿import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
+import hardhatToolboxViemPlugin from "@nomicfoundation/hardhat-toolbox-viem";
 import { configVariable, defineConfig } from "hardhat/config";
 
 export default defineConfig({
@@ -37,11 +37,12 @@ export default defineConfig({
       chainType: "op",
     },
 
-    baseSepolia: {
+
+    baseMainnet: {
       type: "http",
       chainType: "op",
-      url: "https://sepolia.base.org",
-      accounts: [configVariable("BASE_SEPOLIA_PRIVATE_KEY")],
+      url: "https://mainnet.base.org",
+      accounts: [configVariable("BASE_MAINNET_PRIVATE_KEY")],
     },
   },
 });

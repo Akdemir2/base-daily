@@ -49,3 +49,6 @@ cache/
 .claude/
 .vercel
 .env*
+
+# Local backup files
+*.bak

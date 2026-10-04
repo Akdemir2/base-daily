@@ -5,7 +5,7 @@ import {
   http,
   isAddress,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { privateKeyToAccount } from "viem/accounts";
 
 import { redis } from "@/lib/server/redis";
@@ -29,16 +29,16 @@ const signerAccount = privateKeyToAccount(
 
 const walletClient = createWalletClient({
   account: signerAccount,
-  chain: baseSepolia,
+  chain: base,
   transport: http(),
 });
 
 const domain = {
   name: "Base Daily",
   version: "1",
-  chainId: baseSepolia.id,
+  chainId: base.id,
   verifyingContract:
-    "0xEDc599d1d184E2dDdFb44299a0a13eD2DCB2e322",
+    "0x17d9db87cbAd2b8A39900C2856a559ad1374748e",
 } as const;
 
 const types = {
@@ -150,7 +150,7 @@ export async function POST(request: Request) {
 
     const wallet = getAddress(body.wallet);
     const answerKey =
-      `base-daily:answer:${day}:${wallet.toLowerCase()}`;
+      `base-daily:v2:answer:${day}:${wallet.toLowerCase()}`;
 
     const existingValue = await redis.get<unknown>(answerKey);
 

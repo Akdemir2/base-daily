@@ -1,5 +1,5 @@
 export const BASE_DAILY_ADDRESS =
-  "0xEDc599d1d184E2dDdFb44299a0a13eD2DCB2e322" as const;
+  "0x17d9db87cbAd2b8A39900C2856a559ad1374748e" as const;
 
 export const BASE_DAILY_ABI = [
   {

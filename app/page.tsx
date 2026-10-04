@@ -7,7 +7,7 @@ import {
   custom,
   http,
 } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { sdk } from "@farcaster/miniapp-sdk";
 
 const BUILDER_CODE_SUFFIX = "0x62635f7876686c7a6e7a6a0b0080218021802180218021802180218021" as const;
@@ -73,11 +73,11 @@ type LeaderboardResponse = {
   updatedAt: string;
 };
 
-const BASE_SEPOLIA_CHAIN_ID = "0x14a34";
+const BASE_MAINNET_CHAIN_ID = "0x2105";
 
-function isBaseSepoliaChain(chainId: unknown) {
+function isBaseMainnetChain(chainId: unknown) {
   if (typeof chainId === "number") {
-    return chainId === 84532;
+    return chainId === 8453;
   }
 
   if (typeof chainId !== "string") {
@@ -87,10 +87,10 @@ function isBaseSepoliaChain(chainId: unknown) {
   const value = chainId.trim().toLowerCase();
 
   if (value.startsWith("0x")) {
-    return Number.parseInt(value, 16) === 84532;
+    return Number.parseInt(value, 16) === 8453;
   }
 
-  return Number.parseInt(value, 10) === 84532;
+  return Number.parseInt(value, 10) === 8453;
 }
 
 function shortenAddress(address: string) {
@@ -220,7 +220,7 @@ export default function Home() {
         method: "eth_chainId",
       });
 
-      if (isBaseSepoliaChain(chainId)) {
+      if (isBaseMainnetChain(chainId)) {
         setWrongNetwork(false);
         return true;
       }
@@ -262,7 +262,7 @@ export default function Home() {
       const chainId = args[0];
 
       if (typeof chainId === "string") {
-        setWrongNetwork(!isBaseSepoliaChain(chainId));
+        setWrongNetwork(!isBaseMainnetChain(chainId));
       }
 
       setSelectedAnswer(null);
@@ -406,8 +406,8 @@ export default function Home() {
   async function readUserStats(address: `0x${string}`) {
     try {
       const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http("https://sepolia.base.org"),
+        chain: base,
+        transport: http("https://mainnet.base.org"),
       });
 
       const stats = await publicClient.readContract({
@@ -461,9 +461,9 @@ export default function Home() {
         method: "eth_chainId",
       });
 
-      if (!isBaseSepoliaChain(chainId)) {
+      if (!isBaseMainnetChain(chainId)) {
         setWrongNetwork(true);
-        throw new Error("Switch to Base Sepolia before submitting.");
+        throw new Error("Switch to Base Mainnet before submitting.");
       }
 
       const response = await fetch("/api/answer", {
@@ -532,14 +532,14 @@ export default function Home() {
         method: "eth_chainId",
       });
 
-      if (!isBaseSepoliaChain(chainId)) {
+      if (!isBaseMainnetChain(chainId)) {
         setWrongNetwork(true);
-        throw new Error("Switch to Base Sepolia before claiming.");
+        throw new Error("Switch to Base Mainnet before claiming.");
       }
 
       const walletClient = createWalletClient({
         account: currentAccount,
-        chain: baseSepolia,
+        chain: base,
         transport: custom(provider),
         dataSuffix: BUILDER_CODE_SUFFIX,
       });
@@ -557,8 +557,8 @@ export default function Home() {
       });
 
       const publicClient = createPublicClient({
-        chain: baseSepolia,
-        transport: http("https://sepolia.base.org"),
+        chain: base,
+        transport: http("https://mainnet.base.org"),
       });
 
       const receipt = await publicClient.waitForTransactionReceipt({
@@ -654,7 +654,7 @@ Think you know Base?`;
         method: "wallet_switchEthereumChain",
         params: [
           {
-            chainId: BASE_SEPOLIA_CHAIN_ID,
+            chainId: BASE_MAINNET_CHAIN_ID,
           },
         ],
       });
@@ -664,7 +664,7 @@ Think you know Base?`;
       setWalletError(
         err instanceof Error
           ? err.message
-          : "Could not switch to Base Sepolia.",
+          : "Could not switch to Base Mainnet.",
       );
     } finally {
       setWalletBusy(false);
@@ -1001,7 +1001,7 @@ Think you know Base?`;
                     {!walletAddress
                       ? "Connect Wallet to Answer"
                       : wrongNetwork
-                        ? "Switch to Base Sepolia"
+                        ? "Switch to Base Mainnet"
                         : answerBusy
                           ? "Submitting..."
                           : "Submit Answer"}
@@ -1016,7 +1016,7 @@ Think you know Base?`;
                 </div>
 
                 <h3 className="mt-4 text-[30px] font-bold tracking-[-0.04em]">
-                  You&apos;re all set ✓
+                  You&apos;re all set &#10003;
                 </h3>
 
                 <p className="mt-3 text-[15px] leading-6 text-[#a7b8c9]">
@@ -1038,7 +1038,7 @@ Think you know Base?`;
                       Current Streak
                     </div>
                     <div className="mt-2 text-2xl font-bold text-white">
-                      🔥 {userStats?.currentStreak ?? 0}
+                    &#128293; {userStats?.currentStreak ?? 0}
                     </div>
                   </div>
                 </div>
@@ -1082,7 +1082,7 @@ Think you know Base?`;
                       Points claimed!
                     </div>
                     <div className="mt-1 text-xs text-[#a7b8c9]">
-                      Your Base Sepolia transaction was confirmed.
+                      Your Base Mainnet transaction was confirmed.
                     </div>
 
                     <div className="mt-4 grid grid-cols-2 gap-3">
