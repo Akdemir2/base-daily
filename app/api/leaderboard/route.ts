@@ -1,33 +1,12 @@
-﻿import { NextResponse } from "next/server";
-import { decodeEventLog } from "viem";
+import { NextResponse } from "next/server";
 
 import {
-  BASE_DAILY_ABI,
-  BASE_DAILY_ADDRESS,
-} from "@/lib/contract/baseDaily";
-
-const ETHERSCAN_API = "https://api.etherscan.io/v2/api";
+  fetchLeaderboardEvents,
+  syncLeaderboardIndex,
+} from "@/lib/server/leaderboard-indexer";
 
 const NEYNAR_BULK_BY_ADDRESS_API =
   "https://api.neynar.com/v2/farcaster/user/bulk-by-address/";
-
-const DAILY_CLAIMED_TOPIC =
-  "0xd86d84111472a12500023ca08d5f1394e9e00a1571717990c87d1d185a60beef";
-
-type EtherscanLog = {
-  address: `0x${string}`;
-  blockNumber: string;
-  data: `0x${string}`;
-  logIndex: string;
-  topics: [`0x${string}`, ...`0x${string}`[]];
-  transactionHash: `0x${string}`;
-};
-
-type EtherscanResponse = {
-  status: string;
-  message: string;
-  result: EtherscanLog[] | string;
-};
 
 type NeynarUser = {
   fid?: number;
@@ -78,21 +57,13 @@ async function fetchFarcasterProfiles(addresses: `0x${string}`[]) {
         Accept: "application/json",
         "x-api-key": apiKey,
       },
-      next: {
-        revalidate: 300,
-      },
+      next: { revalidate: 300 },
     });
 
     if (!response.ok) {
-      const text = await response.text();
-
       console.warn(
-        `[Base Daily] Neynar profile enrichment failed (${response.status}): ${text.slice(
-          0,
-          300,
-        )}`,
+        `[Base Daily] Neynar profile enrichment failed (${response.status}).`,
       );
-
       return profiles;
     }
 
@@ -138,7 +109,6 @@ async function fetchFarcasterProfiles(addresses: `0x${string}`[]) {
       });
     }
   } catch (error) {
-    // Farcaster enrichment must never take the onchain leaderboard down.
     console.warn("[Base Daily] Neynar profile enrichment failed", error);
   }
 
@@ -147,85 +117,23 @@ async function fetchFarcasterProfiles(addresses: `0x${string}`[]) {
 
 export async function GET() {
   try {
-    const apiKey = process.env.ETHERSCAN_API_KEY;
-    if (!apiKey) throw new Error("ETHERSCAN_API_KEY is missing.");
-
-    const params = new URLSearchParams({
-      chainid: "8453",
-      apikey: apiKey,
-      module: "logs",
-      action: "getLogs",
-      fromBlock: "46264823",
-      toBlock: "latest",
-      address: BASE_DAILY_ADDRESS,
-      topic0: DAILY_CLAIMED_TOPIC,
-    });
-
-    const response = await fetch(`${ETHERSCAN_API}?${params}`, {
-      next: {
-        revalidate: 30,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Etherscan returned HTTP ${response.status}.`);
-    }
-
-    const payload = (await response.json()) as EtherscanResponse;
-
-    if (!Array.isArray(payload.result)) {
-      throw new Error(
-        typeof payload.result === "string"
-          ? payload.result
-          : "Invalid Etherscan response.",
-      );
-    }
-
-    const sortedLogs = [...payload.result].sort((a, b) => {
-      const blockA = BigInt(a.blockNumber);
-      const blockB = BigInt(b.blockNumber);
-
-      if (blockA < blockB) return -1;
-      if (blockA > blockB) return 1;
-
-      const logIndexA = BigInt(a.logIndex);
-      const logIndexB = BigInt(b.logIndex);
-
-      if (logIndexA < logIndexB) return -1;
-      if (logIndexA > logIndexB) return 1;
-
-      return 0;
-    });
+    const sync = await syncLeaderboardIndex();
+    const events = await fetchLeaderboardEvents();
 
     const latestByUser = new Map<string, LeaderboardEntry>();
 
-    for (const log of sortedLogs) {
-      try {
-        const decoded = decodeEventLog({
-          abi: BASE_DAILY_ABI,
-          eventName: "DailyClaimed",
-          data: log.data,
-          topics: log.topics,
-        });
+    for (const event of events) {
+      const key = normalize(event.address);
+      const previous = latestByUser.get(key);
 
-        const args = decoded.args;
-
-        const address = args.user;
-        const key = normalize(address);
-
-        const previous = latestByUser.get(key);
-
-        latestByUser.set(key, {
-          address,
-          totalPoints: Number(args.totalPoints),
-          currentStreak: Number(args.currentStreak),
-          totalCorrect: Number(args.totalCorrect),
-          totalPlayed: (previous?.totalPlayed ?? 0) + 1,
-          lastPlayedDay: Number(args.day),
-        });
-      } catch {
-        // Ignore malformed or unrelated logs.
-      }
+      latestByUser.set(key, {
+        address: event.address,
+        totalPoints: event.totalPoints,
+        currentStreak: event.currentStreak,
+        totalCorrect: event.totalCorrect,
+        totalPlayed: (previous?.totalPlayed ?? 0) + 1,
+        lastPlayedDay: event.day,
+      });
     }
 
     const entries = Array.from(latestByUser.values());
@@ -260,19 +168,19 @@ export async function GET() {
     return NextResponse.json({
       leaderboard,
       updatedAt: new Date().toISOString(),
+      index: {
+        caughtUp: sync.locked ? false : sync.caughtUp,
+        locked: sync.locked,
+        chunksProcessed: sync.chunksProcessed,
+      },
+
     });
   } catch (error) {
     console.error("[Base Daily] leaderboard error", error);
 
     return NextResponse.json(
-      {
-        error: "Unable to load leaderboard.",
-      },
-      {
-        status: 500,
-      },
+      { error: "Unable to load leaderboard." },
+      { status: 500 },
     );
   }
 }
-
-

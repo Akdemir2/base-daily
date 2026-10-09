@@ -52,3 +52,7 @@ cache/
 
 # Local backup files
 *.bak
+
+# Local indexer diagnostics and backups
+/scripts/check-leaderboard-index.mts
+*.backup
