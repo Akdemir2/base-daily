@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { decodeEventLog } from "viem";
 
 import {
@@ -6,7 +6,7 @@ import {
   BASE_DAILY_ADDRESS,
 } from "@/lib/contract/baseDaily";
 
-const BLOCKSCOUT_API = "https://base-sepolia.blockscout.com/api";
+const BLOCKSCOUT_API = "https://base.blockscout.com/api";
 
 const NEYNAR_BULK_BY_ADDRESS_API =
   "https://api.neynar.com/v2/farcaster/user/bulk-by-address/";
