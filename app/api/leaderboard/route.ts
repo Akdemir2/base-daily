@@ -6,7 +6,7 @@ import {
   BASE_DAILY_ADDRESS,
 } from "@/lib/contract/baseDaily";
 
-const BLOCKSCOUT_API = "https://base.blockscout.com/api";
+const ETHERSCAN_API = "https://api.etherscan.io/v2/api";
 
 const NEYNAR_BULK_BY_ADDRESS_API =
   "https://api.neynar.com/v2/farcaster/user/bulk-by-address/";
@@ -14,7 +14,7 @@ const NEYNAR_BULK_BY_ADDRESS_API =
 const DAILY_CLAIMED_TOPIC =
   "0xd86d84111472a12500023ca08d5f1394e9e00a1571717990c87d1d185a60beef";
 
-type BlockscoutLog = {
+type EtherscanLog = {
   address: `0x${string}`;
   blockNumber: string;
   data: `0x${string}`;
@@ -23,10 +23,10 @@ type BlockscoutLog = {
   transactionHash: `0x${string}`;
 };
 
-type BlockscoutResponse = {
+type EtherscanResponse = {
   status: string;
   message: string;
-  result: BlockscoutLog[] | string;
+  result: EtherscanLog[] | string;
 };
 
 type NeynarUser = {
@@ -147,7 +147,12 @@ async function fetchFarcasterProfiles(addresses: `0x${string}`[]) {
 
 export async function GET() {
   try {
+    const apiKey = process.env.ETHERSCAN_API_KEY;
+    if (!apiKey) throw new Error("ETHERSCAN_API_KEY is missing.");
+
     const params = new URLSearchParams({
+      chainid: "8453",
+      apikey: apiKey,
       module: "logs",
       action: "getLogs",
       fromBlock: "46264823",
@@ -156,23 +161,23 @@ export async function GET() {
       topic0: DAILY_CLAIMED_TOPIC,
     });
 
-    const response = await fetch(`${BLOCKSCOUT_API}?${params}`, {
+    const response = await fetch(`${ETHERSCAN_API}?${params}`, {
       next: {
         revalidate: 30,
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Blockscout returned HTTP ${response.status}.`);
+      throw new Error(`Etherscan returned HTTP ${response.status}.`);
     }
 
-    const payload = (await response.json()) as BlockscoutResponse;
+    const payload = (await response.json()) as EtherscanResponse;
 
     if (!Array.isArray(payload.result)) {
       throw new Error(
         typeof payload.result === "string"
           ? payload.result
-          : "Invalid Blockscout response.",
+          : "Invalid Etherscan response.",
       );
     }
 
@@ -269,3 +274,5 @@ export async function GET() {
     );
   }
 }
+
+
