@@ -1,0 +1,60 @@
+name: Code Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript Check
+        run: npx tsc --noEmit
+
+      - name: Next.js Production Build
+        run: npm run build
+        env:
+          KV_REST_API_URL: https://localhost:8070
+          KV_REST_API_TOKEN: ci-placeholder-token
+
+      - name: Audit Production Dependencies
+        shell: bash
+        run: |
+          npm audit --omit=dev --json > /tmp/npm-audit-production.json || true
+          node -e '
+            const fs = require("node:fs");
+            const report = JSON.parse(fs.readFileSync("/tmp/npm-audit-production.json", "utf8"));
+            console.log("Production dependency vulnerability summary:", JSON.stringify(report.metadata?.vulnerabilities ?? {}));
+            for (const [name, item] of Object.entries(report.vulnerabilities ?? {})) {
+              const via = (item.via ?? []).map((entry) =>
+                typeof entry === "string" ? entry : entry.title
+              );
+              console.log(JSON.stringify({
+                package: name,
+                severity: item.severity,
+                range: item.range,
+                direct: item.isDirect,
+                fixAvailable: item.fixAvailable,
+                via
+              }));
+            }
+          '
