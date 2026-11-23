@@ -13,25 +13,27 @@ import { getQuestionForDay, getUtcDay } from "@/lib/server/questions";
 
 export const dynamic = "force-dynamic";
 
-const signerPrivateKey = process.env.BASE_DAILY_SIGNER_PRIVATE_KEY;
+function createSignerWalletClient() {
+  const signerPrivateKey = process.env.BASE_DAILY_SIGNER_PRIVATE_KEY;
 
-if (!signerPrivateKey) {
-  throw new Error("BASE_DAILY_SIGNER_PRIVATE_KEY is missing.");
+  if (!signerPrivateKey) {
+    throw new Error("BASE_DAILY_SIGNER_PRIVATE_KEY is missing.");
+  }
+
+  if (!/^0x[0-9a-fA-F]{64}$/.test(signerPrivateKey)) {
+    throw new Error("BASE_DAILY_SIGNER_PRIVATE_KEY is invalid.");
+  }
+
+  const signerAccount = privateKeyToAccount(
+    signerPrivateKey as `0x${string}`,
+  );
+
+  return createWalletClient({
+    account: signerAccount,
+    chain: base,
+    transport: http(),
+  });
 }
-
-if (!/^0x[0-9a-fA-F]{64}$/.test(signerPrivateKey)) {
-  throw new Error("BASE_DAILY_SIGNER_PRIVATE_KEY is invalid.");
-}
-
-const signerAccount = privateKeyToAccount(
-  signerPrivateKey as `0x${string}`,
-);
-
-const walletClient = createWalletClient({
-  account: signerAccount,
-  chain: base,
-  transport: http(),
-});
 
 const domain = {
   name: "Base Daily",
@@ -179,6 +181,9 @@ export async function POST(request: Request) {
     const correct = answer === question.correctOption;
     const points = correct ? 3 : 1;
 
+    // Resolve the signing key only when a new answer needs a signature.
+    // This keeps Next.js build-time route evaluation independent of secrets.
+    const walletClient = createSignerWalletClient();
     const signature = await walletClient.signTypedData({
       domain,
       types,
